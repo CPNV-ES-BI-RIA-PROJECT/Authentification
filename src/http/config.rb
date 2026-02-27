@@ -1,0 +1,2 @@
+API_VERSION = 'v1'
+PREFIX = "/api/#{API_VERSION}/"
