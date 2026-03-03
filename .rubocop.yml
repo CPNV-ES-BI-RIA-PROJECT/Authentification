@@ -18,3 +18,6 @@ Style/MutableConstant:
 
 Metrics/BlockLength:
   Max: 40
+
+Layout/EndOfLine:
+  Enabled: false
