@@ -2,10 +2,7 @@
 classDiagram
   class IamProviderAdapter {
     <<interface>>
-    +getIdentity(identityId: string) json
-    +validateCredentials(credentials: json) boolean
-    +createCredential(identityId: string) json
-    +revokeCredential(credentialId: string) void
+    ...
   }
 
   class AwsIamProviderAdapter {
