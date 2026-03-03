@@ -1,5 +1,4 @@
 require 'minitest/autorun'
-require 'ostruct'
 require_relative '../../../src/model/iam_adapter/aws_iam_adapter'
 
 class AwsIamAdapterTest < Minitest::Test
@@ -16,7 +15,35 @@ class AwsIamAdapterTest < Minitest::Test
   end
 
   def test_validate_credentials
-    adapter = AwsIamAdapter.new
-    assert adapter.validate_credentials, 'Expected credentials to be valid'
+    client = Object.new
+    Aws::IAM::Client.stub(:new, client) do
+      adapter = AwsIamAdapter.new
+      assert adapter.validate_credentials, 'Expected credentials to be valid'
+    end
+  end
+
+  def test_verify_user_password_with_valid_credentials
+    client = Object.new
+    def client.get_user(access_key_id:, secret_access_key:)
+      { access_key_id: access_key_id, secret_access_key: secret_access_key }
+    end
+
+    Aws::IAM::Client.stub(:new, client) do
+      adapter = AwsIamAdapter.new
+      assert adapter.verify_user_password('test-user', 'test-password'), 'Expected credentials to be verified'
+    end
+  end
+
+  def test_verify_user_password_with_invalid_credentials
+    client = Object.new
+    def client.get_user(*)
+      raise Aws::IAM::Errors::NoSuchEntity.new(nil, 'not found')
+    end
+
+    Aws::IAM::Client.stub(:new, client) do
+      adapter = AwsIamAdapter.new
+      refute adapter.verify_user_password('invalid-user', 'invalid-password'),
+             'Expected invalid credentials to return false'
+    end
   end
 end
