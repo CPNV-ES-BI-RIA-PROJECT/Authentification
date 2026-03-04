@@ -1,0 +1,1 @@
+class TokenError < StandardError; end

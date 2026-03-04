@@ -34,8 +34,9 @@ classDiagram
   }
 
   class SessionService {
-    +authenticate(credentials: json) json
-    +revoke(sessionId: string) void
+    +login(username: string, password: string, providerType: string)
+    +currentUser(token: string)
+    +logout(token: string)
   }
 
   class SessionController {
