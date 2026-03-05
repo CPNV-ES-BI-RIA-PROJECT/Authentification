@@ -1,4 +1,5 @@
 require_relative '../model/iam_adapter/aws_iam_adapter'
+require_relative '../exceptions/unknown_adapter_type_error'
 
 class IamAdapterFactory
   def get_adapter(adapter_type)

@@ -31,7 +31,7 @@ class BearerTokenAdapter
   private
 
   def decode_and_validate(token)
-    decoded_token = JWT.decode(token, @secret_key, true, { algorithm: 'HS256' })
+    decoded_token = JWT.decode(token, @secret_key, true, { algorithm: 'HS256', verify_expiration: false })
     raise ExpiredTokenError, 'Token has expired' if decoded_token[0]['exp'] < Time.now.to_i
     raise RevokedTokenError, 'Token has been revoked' if revoked_tokens.include?(token)
 

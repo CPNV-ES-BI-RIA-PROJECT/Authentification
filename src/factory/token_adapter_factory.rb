@@ -1,4 +1,5 @@
 require_relative '../model/token_adapter/bearer_token_adapter'
+require_relative '../exceptions/unknown_adapter_type_error'
 
 class TokenAdapterFactory
   def get_adapter(adapter_type)

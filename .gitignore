@@ -2,3 +2,6 @@
 
 storages/*
 !storages/.gitkeep
+
+.rubocop_cache/
+coverage/

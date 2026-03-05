@@ -12,4 +12,5 @@ gem 'sinatra', '~> 4.2'
 group :development, :test do
   gem 'minitest'
   gem 'rubocop', require: false
+  gem 'simplecov', require: false
 end

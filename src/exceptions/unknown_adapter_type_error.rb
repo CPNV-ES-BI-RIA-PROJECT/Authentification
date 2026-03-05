@@ -1,0 +1,1 @@
+class UnknownAdapterTypeError < StandardError; end

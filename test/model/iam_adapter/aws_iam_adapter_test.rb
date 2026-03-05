@@ -1,4 +1,4 @@
-require 'minitest/autorun'
+require_relative '../../test_helper'
 require_relative '../../../src/model/iam_adapter/aws_iam_adapter'
 
 class AwsIamAdapterTest < Minitest::Test
@@ -45,5 +45,25 @@ class AwsIamAdapterTest < Minitest::Test
       refute adapter.verify_user_password('invalid-user', 'invalid-password'),
              'Expected invalid credentials to return false'
     end
+  end
+
+  def test_verify_user_password_with_access_denied
+    client = Object.new
+    def client.get_user(*)
+      raise Aws::IAM::Errors::AccessDenied.new(nil, 'access denied')
+    end
+
+    Aws::IAM::Client.stub(:new, client) do
+      adapter = AwsIamAdapter.new
+      refute adapter.verify_user_password('invalid-user', 'invalid-password')
+    end
+  end
+
+  def test_initialize_raises_when_credentials_are_missing
+    ENV.delete('AWS_ACCESS_KEY_ID')
+    ENV.delete('AWS_SECRET_ACCESS_KEY')
+
+    error = assert_raises(MissingCredentialsError) { AwsIamAdapter.new }
+    assert_match(/must be set/, error.message)
   end
 end
