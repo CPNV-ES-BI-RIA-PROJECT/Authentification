@@ -1,57 +1,129 @@
 ```mermaid
 classDiagram
-  class IamProviderAdapter {
-    <<interface>>
-    ...
+  namespace IamAdapters {
+    class IamProviderAdapter {
+      <<interface>>
+      +verify_user_password(username: string, password: string) bool
+    }
+
+    class AwsIamAdapter {
+      -iam_client: Aws::IAM::Client
+      +initialize()
+      +validate_credentials() bool
+      +verify_user_password(username: string, password: string) bool
+    }
+
+    class AwsSDK {
+      ...
+    }
+
+    class IamAdapterFactory {
+      -aws_adapter: AwsIamAdapter
+      +get_adapter(adapter_type: string) IamProviderAdapter
+    }
   }
 
-  class AwsIamProviderAdapter {
-    ...
+  namespace TokenAdapters {
+    class TokenAdapter {
+      <<interface>>
+      +create(data: hash) string
+      +verify(token: string) hash
+      +revoke(token: string) nil
+    }
+
+    class BearerTokenAdapter {
+      -secret_key: string
+      -expiration_time: integer
+      +initialize()
+      +create(data: hash) string
+      +verify(token: string) hash
+      +revoke(token: string) nil
+      -decode_and_validate(token: string) array
+      -revoked_tokens() array
+    }
+
+    class TokenAdapterFactory {
+      -bearer_adapter: BearerTokenAdapter
+      +get_adapter(adapter_type: string) TokenAdapter
+    }
   }
 
-  class AzureIamProviderAdapter {
-    ...
+  class SessionsService {
+    -iam_adapter_factory: IamAdapterFactory
+    -token_adapter_factory: TokenAdapterFactory
+    +login(username: string, password: string, provider: string, token_provider: string) string
+    +current(token: string) hash
+    +logout(token: string) nil
+    -parse_token(token: string) array
   }
 
-  class GoogleIamProviderAdapter {
-    ...
+  class SessionsController {
+    -sessions_service: SessionsService
+    +get_sessions(request)
+    +post_sessions(request)
+    +delete_sessions(request)
   }
 
-  class AwsSDK {
-    ...
+  namespace Exceptions {
+    class UnknownAdapterTypeError {
+      <<exception>>
+    }
+
+    class MissingCredentialsError {
+      <<exception>>
+    }
   }
 
-  class AzureSDK {
-    ...
+  namespace TokenExceptions {
+    class AuthorizationTokenIsMissingError {
+      <<exception>>
+    }
+
+    class InvalidTokenFormatError {
+      <<exception>>
+    }
+
+    class InvalidTokenError {
+      <<exception>>
+    }
+
+    class ExpiredTokenError {
+      <<exception>>
+    }
+
+    class RevokedTokenError {
+      <<exception>>
+    }
+
+    class TokenError {
+      <<exception>>
+    }
   }
 
-  class GoogleSDK {
-    ...
-  }
+  SessionsController --> SessionsService
+  SessionsService --> IamAdapterFactory
+  SessionsService --> TokenAdapterFactory
 
-  class IamProviderFactory {
-    +getProvider(providerType: string) IamProviderAdapter
-  }
+  IamAdapterFactory --> IamProviderAdapter
+  TokenAdapterFactory --> TokenAdapter
 
-  class SessionService {
-    +login(username: string, password: string, providerType: string)
-    +currentUser(token: string)
-    +logout(token: string)
-  }
+  IamProviderAdapter <|.. AwsIamAdapter
+  TokenAdapter <|.. BearerTokenAdapter
 
-  class SessionController {
-    +index(request)
-    +post(request)
-    +delete(request)
-  }
+  AwsIamAdapter --> AwsSDK
 
-  SessionController --> SessionService
-  SessionService --> IamProviderFactory
-  IamProviderFactory --> IamProviderAdapter
-  IamProviderAdapter <|.. AwsIamProviderAdapter
-  IamProviderAdapter <|.. AzureIamProviderAdapter
-  IamProviderAdapter <|.. GoogleIamProviderAdapter
-  AwsIamProviderAdapter --> AwsSDK
-  AzureIamProviderAdapter --> AzureSDK
-  GoogleIamProviderAdapter --> GoogleSDK
+  IamAdapterFactory ..> UnknownAdapterTypeError
+  TokenAdapterFactory ..> UnknownAdapterTypeError
+  AwsIamAdapter ..> MissingCredentialsError
+
+  TokenError <|-- AuthorizationTokenIsMissingError
+  TokenError <|-- InvalidTokenFormatError
+  TokenError <|-- InvalidTokenError
+  TokenError <|-- ExpiredTokenError
+  TokenError <|-- RevokedTokenError
+  SessionsService ..> AuthorizationTokenIsMissingError
+  SessionsService ..> InvalidTokenFormatError
+  BearerTokenAdapter ..> InvalidTokenError
+  BearerTokenAdapter ..> ExpiredTokenError
+  BearerTokenAdapter ..> RevokedTokenError
 ```
