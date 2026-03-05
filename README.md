@@ -109,6 +109,11 @@ We follow the Git Flow branching strategy, which includes the following branches
 
 * For more details on Git Flow, see: https://nvie.com/posts/a-successful-git-branching-model/
 
+### Testing
+
+- Unit tests are required for all new features and bug fixes.
+- 100% code coverage is expected for all new code, and existing code should maintain or improve its coverage.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
