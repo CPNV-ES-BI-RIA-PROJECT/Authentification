@@ -1,0 +1,13 @@
+.git
+.github
+.vscode
+.rubocop_cache
+.ruby-lsp
+coverage
+
+docs
+test
+
+.env
+README.md
+Rakefile
