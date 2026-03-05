@@ -2,10 +2,7 @@
 classDiagram
   class IamProviderAdapter {
     <<interface>>
-    +getIdentity(identityId: string) json
-    +validateCredentials(credentials: json) boolean
-    +createCredential(identityId: string) json
-    +revokeCredential(credentialId: string) void
+    ...
   }
 
   class AwsIamProviderAdapter {
@@ -37,8 +34,9 @@ classDiagram
   }
 
   class SessionService {
-    +authenticate(credentials: json) json
-    +revoke(sessionId: string) void
+    +login(username: string, password: string, providerType: string)
+    +currentUser(token: string)
+    +logout(token: string)
   }
 
   class SessionController {
