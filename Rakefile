@@ -6,5 +6,5 @@ task :http do
 end
 
 task :lint do
-  sh 'rubocop'
+  sh 'rubocop --cache-root .rubocop_cache'
 end

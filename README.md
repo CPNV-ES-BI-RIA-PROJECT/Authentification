@@ -6,6 +6,7 @@ This component is responsible for handling user Session in the application. It p
 - User login with email and password
 - Bearer token generation for authenticated sessions
 - Validation of user credentials
+- Swagger API documentation available at `/api/docs`
 
 ## Getting Started
 
