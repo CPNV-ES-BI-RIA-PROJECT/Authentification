@@ -13,6 +13,7 @@ This component is responsible for handling user Session in the application. It p
 
 - Ruby 3.4.7
 - Bundler 2.6.9
+- Docker 28.1.1 (Deployment on integration environment)
 
 ### Configuration
 
@@ -42,7 +43,12 @@ rake test
 
 ### On integration environment
 
-TODO: add the steps to deploy on integration environment
+Make sure you have Docker installed and running. Then, you can build and run the Docker container:
+
+```bash
+docker build -t auth-composant .
+docker run -d -p 4567:4567 --env-file .env auth-composant
+```
 
 ## Directory structure
 
@@ -59,6 +65,7 @@ TODO: add the steps to deploy on integration environment
 │   │   └── start.rb      # Entry point for starting the HTTP server
 │   ├── model             # Model files representing the data structures and business logic
 │   └── service           # Service files for handling business logic and interactions between models
+├── storages              # Storage files for data persistence and caching
 └── test                  # Test files for unit and integration testing
 ```
 
