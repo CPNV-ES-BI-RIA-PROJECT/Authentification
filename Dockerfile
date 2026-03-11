@@ -37,7 +37,7 @@ RUN apt-get update -qq \
 COPY --from=builder /usr/local/bundle /usr/local/bundle
 COPY Gemfile Gemfile.lock ./
 COPY src ./src
-COPY storages ./storages
+RUN mkdir -p /app/storages
 
 RUN useradd --no-create-home appuser \
     && chown -R appuser:appuser /app /usr/local/bundle
