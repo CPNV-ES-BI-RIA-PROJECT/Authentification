@@ -5,8 +5,14 @@ require_relative '../../exceptions/token/invalid_token_error'
 
 class BearerTokenAdapter
   def initialize
-    @secret_key = ENV['JWT_SECRET_KEY'] || 'default_secret_key'
     @expiration_time = (ENV['JWT_EXPIRATION_TIME'] || 3600).to_i
+    @random_key = SecureRandom.hex(32)
+    @secret_key = if File.exist?('storages/secret')
+                    File.read('storages/secret').strip
+                  else
+                    (File.write('storages/secret', @random_key)
+                     @random_key)
+                  end
   end
 
   def create(data)
@@ -24,7 +30,7 @@ class BearerTokenAdapter
 
   def revoke(token)
     decode_and_validate(token)
-    File.open('storages/revoked_tokens.txt', 'a') { |file| file.puts(token) }
+    File.open('storages/revoked_tokens', 'a') { |file| file.puts(token) }
     nil
   end
 
@@ -41,8 +47,8 @@ class BearerTokenAdapter
   end
 
   def revoked_tokens
-    return [] unless File.exist?('storages/revoked_tokens.txt')
+    return [] unless File.exist?('storages/revoked_tokens')
 
-    File.read('storages/revoked_tokens.txt').split("\n")
+    File.read('storages/revoked_tokens').split("\n")
   end
 end

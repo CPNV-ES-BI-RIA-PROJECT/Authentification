@@ -9,11 +9,11 @@ class SessionsService
     @token_adapter_factory = TokenAdapterFactory.new
   end
 
-  def login(username, password, provider, token_provider)
-    iam_adapter = @iam_adapter_factory.get_adapter(provider)
+  def login(username, password)
+    iam_adapter = @iam_adapter_factory.get_adapter(ENV['IAM_PROVIDER'] || 'aws')
     iam_adapter.verify_user_password(username, password)
-    token_adapter = @token_adapter_factory.get_adapter(token_provider)
-    token_adapter.create({ username: username, provider: provider })
+    token_adapter = @token_adapter_factory.get_adapter(ENV['TOKEN_PROVIDER'] || 'jwt')
+    token_adapter.create({ username: username, provider: ENV['IAM_PROVIDER'] || 'aws' })
   end
 
   def current(token)

@@ -20,14 +20,14 @@ end
 post "#{PREFIX}sessions" do
   content_type :json
 
-  unless params[:username] && params[:password] && params[:provider] && params[:token_provider]
+  unless params[:username] && params[:password]
     status 400
     return { error: 'Missing parameters' }.to_json
   end
 
   {
     token: @sessions_service.login(
-      params[:username], params[:password], params[:provider], params[:token_provider]
+      params[:username], params[:password]
     )
   }.to_json
 rescue UnknownAdapterTypeError => e
