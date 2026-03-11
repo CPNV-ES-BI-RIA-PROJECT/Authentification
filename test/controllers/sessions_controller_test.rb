@@ -37,16 +37,14 @@ class SessionsControllerTest < Minitest::Test
 
   def test_post_sessions_returns_token
     service = Minitest::Mock.new
-    service.expect(:login, 'Bearer generated-token', %w[alice secret fake bearer])
+    service.expect(:login, 'Bearer generated-token', ['alice', 'secret'])
 
     response = SessionsService.stub(:new, service) do
       @request.post(
         '/api/v1/sessions',
         params: {
           username: 'alice',
-          password: 'secret',
-          provider: 'fake',
-          token_provider: 'bearer'
+          password: 'secret'
         }
       )
     end
@@ -65,7 +63,7 @@ class SessionsControllerTest < Minitest::Test
 
   def test_post_sessions_returns_unauthorized_on_token_error
     service = Object.new
-    def service.login(*)
+    def service.login(_username, _password)
       raise InvalidTokenError, 'Login failed'
     end
 
@@ -74,9 +72,7 @@ class SessionsControllerTest < Minitest::Test
         '/api/v1/sessions',
         params: {
           username: 'alice',
-          password: 'secret',
-          provider: 'fake',
-          token_provider: 'bearer'
+          password: 'secret'
         }
       )
     end
@@ -87,7 +83,7 @@ class SessionsControllerTest < Minitest::Test
 
   def test_post_sessions_returns_bad_request_on_unknown_adapter_type
     service = Object.new
-    def service.login(*)
+    def service.login(_username, _password)
       raise UnknownAdapterTypeError, 'Unknown adapter type: ldap'
     end
 
@@ -96,9 +92,7 @@ class SessionsControllerTest < Minitest::Test
         '/api/v1/sessions',
         params: {
           username: 'alice',
-          password: 'secret',
-          provider: 'ldap',
-          token_provider: 'bearer'
+          password: 'secret'
         }
       )
     end
