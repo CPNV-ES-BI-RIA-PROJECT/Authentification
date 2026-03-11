@@ -16,17 +16,25 @@ class SessionsServiceTest < Minitest::Test
   end
 
   def test_login_verifies_credentials_and_creates_token
+    previous_iam_provider = ENV['IAM_PROVIDER']
+    previous_token_provider = ENV['TOKEN_PROVIDER']
+    ENV['IAM_PROVIDER'] = 'custom-iam'
+    ENV['TOKEN_PROVIDER'] = 'custom-token'
+
     iam_adapter = Minitest::Mock.new
     token_adapter = Minitest::Mock.new
-    @iam_factory.expect(:get_adapter, iam_adapter, ['aws'])
+    @iam_factory.expect(:get_adapter, iam_adapter, ['custom-iam'])
     iam_adapter.expect(:verify_user_password, true, %w[alice secret])
-    @token_factory.expect(:get_adapter, token_adapter, ['bearer'])
-    token_adapter.expect(:create, 'Bearer generated-token', [{ username: 'alice', provider: 'aws' }])
+    @token_factory.expect(:get_adapter, token_adapter, ['custom-token'])
+    token_adapter.expect(:create, 'Bearer generated-token', [{ username: 'alice', provider: 'custom-iam' }])
 
-    result = @service.login('alice', 'secret', 'aws', 'bearer')
+    result = @service.login('alice', 'secret')
     assert_equal 'Bearer generated-token', result
     iam_adapter.verify
     token_adapter.verify
+  ensure
+    ENV['IAM_PROVIDER'] = previous_iam_provider
+    ENV['TOKEN_PROVIDER'] = previous_token_provider
   end
 
   def test_current_parses_token_and_verifies_it

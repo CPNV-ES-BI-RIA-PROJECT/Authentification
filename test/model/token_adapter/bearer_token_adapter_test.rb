@@ -1,21 +1,24 @@
 require 'jwt'
+require 'securerandom'
 require_relative '../../test_helper'
 require_relative '../../../src/model/token_adapter/bearer_token_adapter'
 
 class BearerTokenAdapterTest < Minitest::Test
-  REVOKED_TOKENS_FILE = 'storages/revoked_tokens.txt'.freeze
+  SECRET_FILE = BearerTokenAdapter::SECRET_FILE_PATH
+  REVOKED_TOKENS_FILE = BearerTokenAdapter::REVOKED_TOKENS_FILE_PATH
 
   def setup
-    ENV['JWT_SECRET_KEY'] = 'test_secret'
     ENV['JWT_EXPIRATION_TIME'] = '60'
     File.delete(REVOKED_TOKENS_FILE) if File.exist?(REVOKED_TOKENS_FILE)
+    File.delete(SECRET_FILE) if File.exist?(SECRET_FILE)
+    File.write(SECRET_FILE, "test_secret\n")
     @adapter = BearerTokenAdapter.new
   end
 
   def teardown
-    ENV.delete('JWT_SECRET_KEY')
     ENV.delete('JWT_EXPIRATION_TIME')
     File.delete(REVOKED_TOKENS_FILE) if File.exist?(REVOKED_TOKENS_FILE)
+    File.delete(SECRET_FILE) if File.exist?(SECRET_FILE)
   end
 
   def test_create_returns_bearer_token
@@ -52,5 +55,17 @@ class BearerTokenAdapterTest < Minitest::Test
 
     assert_includes File.read(REVOKED_TOKENS_FILE), token
     assert_raises(RevokedTokenError) { @adapter.verify(token) }
+  end
+
+  def test_initialize_writes_secret_when_missing
+    File.delete(SECRET_FILE) if File.exist?(SECRET_FILE)
+
+    SecureRandom.stub :hex, 'stub-secret' do
+      adapter = BearerTokenAdapter.new
+
+      assert File.exist?(SECRET_FILE)
+      assert_equal 'stub-secret', File.read(SECRET_FILE).strip
+      assert_equal 'stub-secret', adapter.instance_variable_get(:@secret_key)
+    end
   end
 end

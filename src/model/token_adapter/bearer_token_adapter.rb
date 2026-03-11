@@ -4,9 +4,19 @@ require_relative '../../exceptions/token/revoked_token_error'
 require_relative '../../exceptions/token/invalid_token_error'
 
 class BearerTokenAdapter
+  STORAGE_PATH = 'storages'.freeze
+  SECRET_FILE_PATH = File.join(STORAGE_PATH, 'secret').freeze
+  REVOKED_TOKENS_FILE_PATH = File.join(STORAGE_PATH, 'revoked_tokens').freeze
+
   def initialize
-    @secret_key = ENV['JWT_SECRET_KEY'] || 'default_secret_key'
     @expiration_time = (ENV['JWT_EXPIRATION_TIME'] || 3600).to_i
+    @random_key = SecureRandom.hex(32)
+    @secret_key = if File.exist?(SECRET_FILE_PATH)
+                    File.read(SECRET_FILE_PATH).strip
+                  else
+                    (File.write(SECRET_FILE_PATH, @random_key)
+                     @random_key)
+                  end
   end
 
   def create(data)
@@ -24,7 +34,7 @@ class BearerTokenAdapter
 
   def revoke(token)
     decode_and_validate(token)
-    File.open('storages/revoked_tokens.txt', 'a') { |file| file.puts(token) }
+    File.open(REVOKED_TOKENS_FILE_PATH, 'a') { |file| file.puts(token) }
     nil
   end
 
@@ -41,8 +51,8 @@ class BearerTokenAdapter
   end
 
   def revoked_tokens
-    return [] unless File.exist?('storages/revoked_tokens.txt')
+    return [] unless File.exist?(REVOKED_TOKENS_FILE_PATH)
 
-    File.read('storages/revoked_tokens.txt').split("\n")
+    File.read(REVOKED_TOKENS_FILE_PATH).split("\n")
   end
 end
