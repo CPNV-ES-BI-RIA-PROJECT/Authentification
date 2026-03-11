@@ -1,4 +1,5 @@
 require 'jwt'
+require 'securerandom'
 require_relative '../../exceptions/token/expired_token_error'
 require_relative '../../exceptions/token/revoked_token_error'
 require_relative '../../exceptions/token/invalid_token_error'
