@@ -4,8 +4,8 @@ require_relative '../../test_helper'
 require_relative '../../../src/model/token_adapter/bearer_token_adapter'
 
 class BearerTokenAdapterTest < Minitest::Test
-  SECRET_FILE = 'storages/secret'.freeze
-  REVOKED_TOKENS_FILE = 'storages/revoked_tokens'.freeze
+  SECRET_FILE = BearerTokenAdapter::SECRET_FILE_PATH
+  REVOKED_TOKENS_FILE = BearerTokenAdapter::REVOKED_TOKENS_FILE_PATH
 
   def setup
     ENV['JWT_EXPIRATION_TIME'] = '60'
