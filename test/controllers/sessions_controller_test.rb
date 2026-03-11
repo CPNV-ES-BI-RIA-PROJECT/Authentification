@@ -37,7 +37,7 @@ class SessionsControllerTest < Minitest::Test
 
   def test_post_sessions_returns_token
     service = Minitest::Mock.new
-    service.expect(:login, 'Bearer generated-token', ['alice', 'secret'])
+    service.expect(:login, 'Bearer generated-token', %w[alice secret])
 
     response = SessionsService.stub(:new, service) do
       @request.post(
