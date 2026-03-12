@@ -4,7 +4,7 @@ require 'openssl'
 require_relative 'iam_adapter'
 require_relative '../../exceptions/missing_credentials_error'
 
-class AwsIamAdapter < IamProviderAdapter
+class CognitoAwsIamAdapter < IamProviderAdapter
   REQUIRED_ENV_VARS = %w[
     AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY

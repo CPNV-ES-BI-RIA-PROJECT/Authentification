@@ -1,4 +1,4 @@
-require_relative '../model/iam_adapter/aws_iam_adapter'
+require_relative '../model/iam_adapter/cognito_aws_iam_adapter'
 require_relative '../exceptions/unknown_adapter_type_error'
 
 class IamAdapterFactory

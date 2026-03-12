@@ -1,7 +1,7 @@
 require_relative '../../test_helper'
-require_relative '../../../src/model/iam_adapter/aws_iam_adapter'
+require_relative '../../../src/model/iam_adapter/cognito_aws_iam_adapter'
 
-class AwsIamAdapterTest < Minitest::Test
+class CognitoAwsIamAdapterTest < Minitest::Test
   def setup
     ENV['AWS_ACCESS_KEY_ID'] = 'test-key'
     ENV['AWS_SECRET_ACCESS_KEY'] = 'test-secret'
@@ -22,7 +22,7 @@ class AwsIamAdapterTest < Minitest::Test
   def test_validate_credentials
     client = Object.new
     Aws::CognitoIdentityProvider::Client.stub(:new, client) do
-      adapter = AwsIamAdapter.new
+      adapter = CognitoAwsIamAdapter.new
       assert adapter.validate_credentials, 'Expected credentials to be valid'
     end
   end
@@ -34,7 +34,7 @@ class AwsIamAdapterTest < Minitest::Test
     end
 
     Aws::CognitoIdentityProvider::Client.stub(:new, client) do
-      adapter = AwsIamAdapter.new
+      adapter = CognitoAwsIamAdapter.new
       assert adapter.verify_user_password('test-user', 'test-password'), 'Expected credentials to be verified'
     end
   end
@@ -46,7 +46,7 @@ class AwsIamAdapterTest < Minitest::Test
     end
 
     Aws::CognitoIdentityProvider::Client.stub(:new, client) do
-      adapter = AwsIamAdapter.new
+      adapter = CognitoAwsIamAdapter.new
       refute adapter.verify_user_password('invalid-user', 'invalid-password'),
              'Expected invalid credentials to return false'
     end
@@ -59,7 +59,7 @@ class AwsIamAdapterTest < Minitest::Test
     end
 
     Aws::CognitoIdentityProvider::Client.stub(:new, client) do
-      adapter = AwsIamAdapter.new
+      adapter = CognitoAwsIamAdapter.new
       refute adapter.verify_user_password('invalid-user', 'invalid-password')
     end
   end
@@ -74,7 +74,7 @@ class AwsIamAdapterTest < Minitest::Test
     end
 
     Aws::CognitoIdentityProvider::Client.stub(:new, client) do
-      adapter = AwsIamAdapter.new
+      adapter = CognitoAwsIamAdapter.new
       assert adapter.verify_user_password('test-user', 'test-password')
       assert captured[:params][:auth_parameters]['SECRET_HASH'],
              'Expected secret hash to be sent when client secret is configured'
@@ -87,7 +87,7 @@ class AwsIamAdapterTest < Minitest::Test
     ENV.delete('AWS_COGNITO_CLIENT_ID')
     ENV.delete('AWS_COGNITO_USER_POOL_ID')
 
-    error = assert_raises(MissingCredentialsError) { AwsIamAdapter.new }
+    error = assert_raises(MissingCredentialsError) { CognitoAwsIamAdapter.new }
     assert_match(/must be set/, error.message)
   end
 end
