@@ -1,4 +1,5 @@
 require_relative '../model/iam_adapter/cognito_aws_iam_adapter'
+require_relative '../model/iam_adapter/aws_iam_adapter'
 require_relative '../exceptions/unknown_adapter_type_error'
 
 class IamAdapterFactory
@@ -6,6 +7,10 @@ class IamAdapterFactory
     adapter_type = adapter_type.to_s.downcase.to_sym
 
     case adapter_type
+    when :cognito
+      return @cognito_adapter if @cognito_adapter
+
+      @cognito_adapter ||= CognitoAwsIamAdapter.new
     when :aws
       return @aws_adapter if @aws_adapter
 

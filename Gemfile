@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'aws-sdk-cognitoidentityprovider', '~> 1.46'
+gem 'aws-sdk-iam'
 gem 'dotenv'
 gem 'jwt', '~> 1.5', '>= 1.5.4'
 gem 'puma', '~> 7.1'

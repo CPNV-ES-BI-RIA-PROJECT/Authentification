@@ -21,6 +21,20 @@ class SessionsControllerTest < Minitest::Test
     service.verify
   end
 
+  def test_get_sessions_accepts_aws_authorization_header
+    aws_header = 'Credential=test/20260312/us-east-1//aws4_request, SignedHeaders=host;x-amz-date, Signature=9feb4616bf43b2f4471501d4543010ef8645572a3fbd4583f97a2137bf7abc48' # rubocop:disable Layout/LineLength
+    service = Minitest::Mock.new
+    service.expect(:current, { username: 'aws-user', provider: 'aws' }, ["AWS4-HMAC-SHA256 #{aws_header}"])
+
+    response = SessionsService.stub(:new, service) do
+      @request.get('/api/v1/sessions', 'HTTP_AUTHORIZATION' => "AWS4-HMAC-SHA256 #{aws_header}")
+    end
+
+    assert_equal 200, response.status
+    assert_equal({ 'username' => 'aws-user', 'provider' => 'aws' }, parse_json(response.body))
+    service.verify
+  end
+
   def test_get_sessions_returns_unauthorized_on_token_error
     service = Object.new
     def service.current(_token)

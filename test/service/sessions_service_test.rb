@@ -71,7 +71,23 @@ class SessionsServiceTest < Minitest::Test
   end
 
   def test_logout_raises_when_token_format_is_invalid
-    assert_raises(InvalidTokenFormatError) { @service.logout('Bearer too many parts') }
+    assert_raises(InvalidTokenFormatError) { @service.logout('Bearer') }
     assert_raises(InvalidTokenFormatError) { @service.logout('only-one-part') }
+  end
+
+  def test_current_handles_aws_signed_authorization_header
+    token_adapter = Object.new
+    called_with = nil
+    token_adapter.define_singleton_method(:verify) do |token|
+      called_with = token
+      { 'username' => 'aws-user', 'provider' => 'aws' }
+    end
+
+    aws_header = 'Credential=test/20260312/us-east-1//aws4_request, SignedHeaders=host;x-amz-date, Signature=9feb4616bf43b2f4471501d4543010ef8645572a3fbd4583f97a2137bf7abc48' # rubocop:disable Layout/LineLength
+    @token_factory.expect(:get_adapter, token_adapter, ['AWS4-HMAC-SHA256'])
+
+    result = @service.current("AWS4-HMAC-SHA256 #{aws_header}")
+    assert_equal({ 'username' => 'aws-user', 'provider' => 'aws' }, result)
+    assert_equal aws_header, called_with
   end
 end

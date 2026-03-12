@@ -16,6 +16,16 @@ class IamAdapterFactoryTest < Minitest::Test
     end
   end
 
+  def test_get_adapter_returns_cognito_adapter_and_memoizes_it
+    cognito_adapter = Object.new
+    CognitoAwsIamAdapter.stub(:new, cognito_adapter) do
+      first = @factory.get_adapter('Cognito')
+      second = @factory.get_adapter(:cognito)
+      assert_same cognito_adapter, first
+      assert_same first, second
+    end
+  end
+
   def test_get_adapter_raises_for_unknown_type
     error = assert_raises(UnknownAdapterTypeError) { @factory.get_adapter('ldap') }
     assert_equal 'Unknown adapter type: ldap', error.message

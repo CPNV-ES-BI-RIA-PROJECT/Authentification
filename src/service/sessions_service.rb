@@ -31,10 +31,12 @@ class SessionsService
   def parse_token(token)
     raise AuthorizationTokenIsMissingError, 'Authorization token is missing' if token.nil? || token.empty?
 
-    token_splitted = token.split(' ')
-    raise InvalidTokenFormatError, 'Invalid token format' unless token_splitted.length == 2
+    adapter_type, token_value = token.strip.split(' ', 2)
+    unless adapter_type && token_value && !token_value.strip.empty?
+      raise InvalidTokenFormatError, 'Invalid token format'
+    end
 
-    token_adapter = @token_adapter_factory.get_adapter(token_splitted[0])
-    [token_adapter, token_splitted[1]]
+    token_adapter = @token_adapter_factory.get_adapter(adapter_type)
+    [token_adapter, token_value.strip]
   end
 end
