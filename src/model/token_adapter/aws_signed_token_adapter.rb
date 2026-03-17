@@ -53,7 +53,6 @@ class AwsSignedTokenAdapter < TokenAdapter
 
     splited_credential = credential.split('/')
 
-
     access_key_id = splited_credential.first
     validate_access_key_id(access_key_id)
     validate_credential_format(credential)
