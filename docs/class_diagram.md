@@ -133,7 +133,6 @@ classDiagram
   BearerTokenAdapter <|.. TokenAdapter
   AwsSignedTokenAdapter <|.. TokenAdapter
 
-  AwsSignedTokenAdapter --> IamAdapterFactory
   AwsSignedTokenAdapter --> IamProviderAdapter
 
   AwsIamAdapter ..> MissingCredentialsError
