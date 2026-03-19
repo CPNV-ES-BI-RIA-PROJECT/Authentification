@@ -13,12 +13,18 @@ classDiagram
       +verify_user_password(username: string, password: string) bool
     }
 
-    class AwsSDK {
-      ...
+    class CognitoAwsIamAdapter {
+      -cognito_client: Aws::CognitoIdentityProvider::Client
+      -client_id: string
+      -user_pool_id: string
+      -client_secret: string?
+      +initialize()
+      +validate_credentials() bool
+      +verify_user_password(username: string, password: string) bool
+      -compute_secret_hash(username: string) string
     }
 
     class IamAdapterFactory {
-      -aws_adapter: AwsIamAdapter
       +get_adapter(adapter_type: string) IamProviderAdapter
     }
   }
@@ -42,8 +48,23 @@ classDiagram
       -revoked_tokens() array
     }
 
+    class AwsSignedTokenAdapter {
+      -iam_adapter: IamProviderAdapter
+      +initialize()
+      +create(data: hash) string <<raises NotImplementedError>>
+      +verify(token: string) hash
+      +revoke(token: string) nil
+      -parse_authorization_header(token: string) hash
+      -validate_token_presence(token: string) nil
+      -validate_credential(credential: string) nil
+      -validate_signature(signature: string) nil
+      -validate_signature_format(signature: string) nil
+      -validate_signed_headers(headers: string) nil
+      -validate_access_key_id(access_key_id: string) nil
+      -validate_credential_format(credential: string) nil
+    }
+
     class TokenAdapterFactory {
-      -bearer_adapter: BearerTokenAdapter
       +get_adapter(adapter_type: string) TokenAdapter
     }
   }
@@ -51,7 +72,7 @@ classDiagram
   class SessionsService {
     -iam_adapter_factory: IamAdapterFactory
     -token_adapter_factory: TokenAdapterFactory
-    +login(username: string, password: string, provider: string, token_provider: string) string
+    +login(username: string, password: string) string
     +current(token: string) hash
     +logout(token: string) nil
     -parse_token(token: string) array
@@ -75,6 +96,10 @@ classDiagram
   }
 
   namespace TokenExceptions {
+    class TokenError {
+      <<exception>>
+    }
+
     class AuthorizationTokenIsMissingError {
       <<exception>>
     }
@@ -94,10 +119,6 @@ classDiagram
     class RevokedTokenError {
       <<exception>>
     }
-
-    class TokenError {
-      <<exception>>
-    }
   }
 
   SessionsController --> SessionsService
@@ -107,23 +128,32 @@ classDiagram
   IamAdapterFactory --> IamProviderAdapter
   TokenAdapterFactory --> TokenAdapter
 
-  IamProviderAdapter <|.. AwsIamAdapter
-  TokenAdapter <|.. BearerTokenAdapter
+  AwsIamAdapter <|.. IamProviderAdapter
+  CognitoAwsIamAdapter <|.. IamProviderAdapter
+  BearerTokenAdapter <|.. TokenAdapter
+  AwsSignedTokenAdapter <|.. TokenAdapter
 
-  AwsIamAdapter --> AwsSDK
+  AwsSignedTokenAdapter --> IamAdapterFactory
+  AwsSignedTokenAdapter --> IamProviderAdapter
 
+  AwsIamAdapter ..> MissingCredentialsError
+  CognitoAwsIamAdapter ..> MissingCredentialsError
   IamAdapterFactory ..> UnknownAdapterTypeError
   TokenAdapterFactory ..> UnknownAdapterTypeError
-  AwsIamAdapter ..> MissingCredentialsError
 
   TokenError <|-- AuthorizationTokenIsMissingError
   TokenError <|-- InvalidTokenFormatError
   TokenError <|-- InvalidTokenError
   TokenError <|-- ExpiredTokenError
   TokenError <|-- RevokedTokenError
+
   SessionsService ..> AuthorizationTokenIsMissingError
   SessionsService ..> InvalidTokenFormatError
+
   BearerTokenAdapter ..> InvalidTokenError
   BearerTokenAdapter ..> ExpiredTokenError
   BearerTokenAdapter ..> RevokedTokenError
+  AwsSignedTokenAdapter ..> InvalidTokenError
+
+  SessionsController ..> TokenError
 ```

@@ -4,7 +4,7 @@ require_relative '../../exceptions/token/invalid_token_error'
 class AwsSignedTokenAdapter < TokenAdapter
   def initialize
     super
-    @iam_adapter = IamAdapterFactory.new.get_adapter(:aws)
+    @iam_adapter = IamAdapterFactory.new.get_adapter(ENV['IAM_PROVIDER'] || 'cognito')
   end
 
   def create(_data)
