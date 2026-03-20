@@ -143,12 +143,10 @@ end
 def login_request_schema
   {
     type: 'object',
-    required: %w[username password provider token_provider],
+    required: %w[username password],
     properties: {
       username: { type: 'string', example: 'alice' },
-      password: { type: 'string', example: 'secret' },
-      provider: { type: 'string', example: 'fake' },
-      token_provider: { type: 'string', example: 'bearer' }
+      password: { type: 'string', example: 'secret' }
     }
   }
 end
