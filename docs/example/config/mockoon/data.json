@@ -1,0 +1,25 @@
+{
+  "uuid": "mock-api-uuid-1234",
+  "lastMigration": 29,
+  "name": "Mock API for User Applications",
+  "endpointPrefix": "/api/v1",
+  "routes": [
+    {
+      "documentation": "Get user applications",
+      "method": "get",
+      "endpoint": "/users",
+      "responses": [
+        {
+          "statusCode": 200,
+          "body": [
+            {
+              "id": 1,
+              "name": "John Doe",
+              "email": "john.doe@example.com"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

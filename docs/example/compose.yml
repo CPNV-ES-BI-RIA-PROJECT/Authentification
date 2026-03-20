@@ -1,0 +1,25 @@
+services:
+  auth:
+    build: ../.
+    environment:
+      - IAM_PROVIDER=fake
+    volumes:
+      - ./data/auth:/app/storages
+
+  api-gateway:
+    image: nginx:stable-perl
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./config/nginx/:/etc/nginx/conf.d/
+    depends_on:
+      - auth
+      - api
+
+  api:
+    image: mockoon/cli
+    restart: always
+    volumes:
+      - ./config/mockoon:/data
+    command: ["--data", "/data/data.json", "-p", "3000"]
