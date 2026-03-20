@@ -44,12 +44,7 @@ rake test
 
 ### On integration environment
 
-Make sure you have Docker installed and running. Then, you can build and run the Docker container:
-
-```bash
-docker build -t auth-composant .
-docker run -d -p 4567:4567 --env-file .env auth-composant
-```
+For the integration environment, please refer to the [deployment documentation](./docs/deployment.md) in the `docs` directory for detailed instructions on how to deploy the application using Docker. 
 
 ## Directory structure
 
