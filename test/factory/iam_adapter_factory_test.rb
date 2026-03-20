@@ -16,6 +16,16 @@ class IamAdapterFactoryTest < Minitest::Test
     end
   end
 
+  def test_get_adapter_returns_fake_adapter_and_memoizes_it
+    fake_adapter = Object.new
+    FakeIamAdapter.stub(:new, fake_adapter) do
+      first = @factory.get_adapter('FAKE')
+      second = @factory.get_adapter(:fake)
+      assert_same fake_adapter, first
+      assert_same first, second
+    end
+  end
+
   def test_get_adapter_returns_cognito_adapter_and_memoizes_it
     cognito_adapter = Object.new
     CognitoAwsIamAdapter.stub(:new, cognito_adapter) do
