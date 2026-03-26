@@ -25,6 +25,8 @@ This guide explains how to run the authentication component and how an orchestra
     - [Step 3: log out](#step-3-log-out)
   - [10. Error Handling](#10-error-handling)
   - [11. Adapter Coverage](#11-adapter-coverage)
+    - [IAM adapters (`src/factory/iam_adapter_factory.rb`)](#iam-adapters-srcfactoryiam_adapter_factoryrb)
+    - [Token adapters (`src/factory/token_adapter_factory.rb`)](#token-adapters-srcfactorytoken_adapter_factoryrb)
   - [12. Environment Variable Summary](#12-environment-variable-summary)
   - [13. Typical Integration Pseudocode](#13-typical-integration-pseudocode)
 
@@ -99,6 +101,7 @@ Endpoints:
 * `GET /api/v1/sessions` (token inspection)
 * `POST /api/v1/sessions` (login)
 * `DELETE /api/v1/sessions` (logout)
+* `GET /api/v1/health` (optional health check)
 
 Swagger UI: `/api/docs`
 OpenAPI JSON: `/api/docs/openapi.json`
@@ -196,15 +199,15 @@ Controllers rescue `TokenError` subclasses (`AuthorizationTokenIsMissingError`, 
 
 ## 12. Environment Variable Summary
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `IAM_PROVIDER` | `cognito` | Selects the IAM adapter (`fake`, `cognito`, or `aws`). |
-| `TOKEN_PROVIDER` | `bearer` | Selects the token adapter (`bearer` or `aws4-hmac-sha256`). |
-| `JWT_EXPIRATION_TIME` | `3600` | Bearer token lifetime in seconds. |
-| `AWS_REGION` | `us-east-1` | AWS region for IAM/Cognito clients. |
-| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | — | Required when using `aws` or `cognito`. |
-| `AWS_COGNITO_CLIENT_ID`, `AWS_COGNITO_USER_POOL_ID` | — | Required for the Cognito adapter. |
-| `AWS_COGNITO_CLIENT_SECRET` | optional | Adds `SECRET_HASH` to Cognito auth. |
+| Variable                                            | Default     | Purpose                                                     |
+| --------------------------------------------------- | ----------- | ----------------------------------------------------------- |
+| `IAM_PROVIDER`                                      | `cognito`   | Selects the IAM adapter (`fake`, `cognito`, or `aws`).      |
+| `TOKEN_PROVIDER`                                    | `bearer`    | Selects the token adapter (`bearer` or `aws4-hmac-sha256`). |
+| `JWT_EXPIRATION_TIME`                               | `3600`      | Bearer token lifetime in seconds.                           |
+| `AWS_REGION`                                        | `us-east-1` | AWS region for IAM/Cognito clients.                         |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`        | —           | Required when using `aws` or `cognito`.                     |
+| `AWS_COGNITO_CLIENT_ID`, `AWS_COGNITO_USER_POOL_ID` | —           | Required for the Cognito adapter.                           |
+| `AWS_COGNITO_CLIENT_SECRET`                         | optional    | Adds `SECRET_HASH` to Cognito auth.                         |
 
 ---
 
