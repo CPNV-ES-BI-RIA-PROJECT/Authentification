@@ -1,3 +1,5 @@
+*All username password can be set as access_key_id and secret_access_key for an API login*
+
 ```mermaid
 sequenceDiagram
   actor MobileUser

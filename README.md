@@ -3,8 +3,10 @@
 This component is responsible for handling user Session in the application. It provides functionalities for user login.
 
 ## Features for other components
-- User login with email and password
+- User login with username and password
+- API login with `access_key_id` and `secret_access_key`
 - Bearer token generation for authenticated sessions
+- Session inspection and token revocation
 - Validation of user credentials
 - Swagger API documentation available at `/api/docs`
 

@@ -34,7 +34,7 @@ This guide explains how to run the authentication component and how an orchestra
 
 ## 1. What This Service Does
 
-The component exposes `/api/v1/sessions` (via `SessionsController`) and `/api/docs` (via `DocsController`). It handles login, session inspection, and logout, issuing bearer tokens for authenticated conversations. You can instantiate `SessionsService` directly from another Ruby app to leverage the same adapters.
+The component exposes `/api/v1/sessions` (via `SessionsController`) and `/api/docs` (via `DocsController`). It handles login, session inspection, and logout for both interactive users and API clients, issuing bearer tokens for authenticated conversations. You can instantiate `SessionsService` directly from another Ruby app to leverage the same adapters.
 
 ---
 
@@ -110,7 +110,7 @@ OpenAPI JSON: `/api/docs/openapi.json`
 
 ## 7. Recommended Orchestrator Flow
 
-1. Request `POST /api/v1/sessions` with `username`/`password` to receive a bearer token.
+1. Request `POST /api/v1/sessions` with either `username`/`password` or `access_key_id`/`secret_access_key` to receive a bearer token.
 2. Use `Authorization: Bearer ...` for subsequent `GET` or `DELETE` calls.
 3. If you need to revoke the token (e.g., on logout), call `DELETE /api/v1/sessions` with the same header.
 4. Inspect sessions to confirm the current authenticated user with `GET /api/v1/sessions`.
@@ -130,15 +130,21 @@ OpenAPI JSON: `/api/docs/openapi.json`
 
 ### 8.2 Create session (login)
 
-`POST /api/v1/sessions` accepts `application/x-www-form-urlencoded` data:
+`POST /api/v1/sessions` accepts `application/x-www-form-urlencoded` data in one of these shapes:
 
 ```
 username=alice&password=secret
 ```
 
+or
+
+```
+access_key_id=AKIAIOSFODNN7EXAMPLE&secret_access_key=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+```
+
 Responses:
 
-* `200 OK` with `{ "token": "Bearer ..." }` when the IAM adapter accepts the credentials.
+* `200 OK` with `{ "token": "Bearer ..." }` when the configured IAM adapter accepts the credentials.
 * `400 Bad Request` if required parameters are missing.
 * `401 Unauthorized` if credentials are invalid.
 
@@ -157,6 +163,12 @@ curl -X POST http://localhost:4567/api/v1/sessions -d "username=user1&password=p
 ```
 
 This returns a JSON bearer token (e.g., `Bearer ey...`).
+
+You can also log in with API credentials:
+
+```bash
+curl -X POST http://localhost:4567/api/v1/sessions -d "access_key_id=AKIAIOSFODNN7EXAMPLE&secret_access_key=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+```
 
 ### Step 2: reuse token
 
@@ -178,7 +190,7 @@ This revokes the token; subsequent `GET` calls fail with `401`.
 
 ## 10. Error Handling
 
-Controllers rescue `TokenError` subclasses (`AuthorizationTokenIsMissingError`, `InvalidTokenFormatError`, `InvalidTokenError`, `ExpiredTokenError`, `RevokedTokenError`) to provide the correct 401/400 HTTP status. `SessionsService` raises `UnknownAdapterTypeError` for unsupported providers, and IAM adapters raise `MissingCredentialsError` if required AWS environment variables are absent.
+Controllers rescue `ApplicationError` subclasses and return `{ "error": "..." }` with the exception status code. In practice, session routes can return `400` for missing parameters or unknown adapter types, and `401` for invalid credentials, missing authorization headers, malformed tokens, expired tokens, revoked tokens, or invalid tokens.
 
 ---
 
@@ -188,12 +200,11 @@ Controllers rescue `TokenError` subclasses (`AuthorizationTokenIsMissingError`, 
 
 * `fake`: accepts `user1/password1` and `user2/password2` (local dev).
 * `cognito`: calls AWS Cognito (`Aws::CognitoIdentityProvider`) with optional client secret hash.
-* `aws`: verifies access key/secret via `Aws::IAM::Client`.
+* `aws`: verifies `access_key_id` / `secret_access_key` via `Aws::IAM::Client`.
 
 ### Token adapters (`src/factory/token_adapter_factory.rb`)
 
-* `bearer`: issues HS256-signed JWTs, stores secret in `storages/secret`, tracks revocations in `storages/revoked_tokens`.
-* `aws4-hmac-sha256`: read-only validator for AWS SigV4 headers (no token creation or revocation).
+* `bearer`: issues HS256-signed JWTs, stores the signing secret in `storages/secret`, and tracks revocations in `storages/revoked_tokens`.
 
 ---
 
@@ -202,7 +213,8 @@ Controllers rescue `TokenError` subclasses (`AuthorizationTokenIsMissingError`, 
 | Variable                                            | Default     | Purpose                                                     |
 | --------------------------------------------------- | ----------- | ----------------------------------------------------------- |
 | `IAM_PROVIDER`                                      | `cognito`   | Selects the IAM adapter (`fake`, `cognito`, or `aws`).      |
-| `TOKEN_PROVIDER`                                    | `bearer`    | Selects the token adapter (`bearer` or `aws4-hmac-sha256`). |
+| `API_IAM_PROVIDER`                                  | `aws`       | Selects the IAM adapter for API credential login flows.     |
+| `TOKEN_PROVIDER`                                    | `bearer`    | Selects the token adapter. The current implementation supports `bearer`. |
 | `JWT_EXPIRATION_TIME`                               | `3600`      | Bearer token lifetime in seconds.                           |
 | `AWS_REGION`                                        | `us-east-1` | AWS region for IAM/Cognito clients.                         |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`        | —           | Required when using `aws` or `cognito`.                     |
@@ -221,5 +233,7 @@ token = service.login(username, password)
 payload = service.current("Bearer #{token}")
 service.logout("Bearer #{token}")
 ```
+
+For API credentials, call `service.login(access_key_id, secret_access_key, 'api')`.
 
 Use the same adapter configuration when you instantiate `SessionsService` inside another Ruby process so the token parsing logic remains centralized.

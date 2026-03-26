@@ -53,7 +53,8 @@ def openapi_info
   {
     title: 'Authentication API',
     version: API_VERSION,
-    description: 'Endpoints for health checks, login, session inspection and logout.'
+    description: 'Endpoints for health checks, session creation, inspection and logout for both user and
+                  API credentials.'
   }
 end
 
@@ -85,7 +86,7 @@ def openapi_get_session
   {
     tags: ['Sessions'],
     summary: 'Get current session',
-    description: 'Returns the current authenticated user from the bearer token.',
+    description: 'Returns the decoded payload of the current bearer token.',
     security: [{ bearerAuth: [] }],
     responses: {
       '200' => json_response('Current user payload', '#/components/schemas/CurrentSession'),
@@ -94,16 +95,32 @@ def openapi_get_session
   }
 end
 
-def openapi_create_session
+def openapi_create_session # rubocop:disable Metrics/MethodLength
   {
     tags: ['Sessions'],
     summary: 'Create session (login)',
-    description: 'Authenticates a user and returns a bearer token.',
+    description: 'Authenticates either an interactive user or an API client and returns a bearer token.',
     requestBody: {
       required: true,
       content: {
         'application/x-www-form-urlencoded' => {
-          schema: { '$ref' => '#/components/schemas/LoginRequest' }
+          schema: { '$ref' => '#/components/schemas/LoginRequest' },
+          examples: {
+            user_credentials: {
+              summary: 'Interactive user login',
+              value: {
+                username: 'alice',
+                password: 'secret'
+              }
+            },
+            api_credentials: {
+              summary: 'API client login',
+              value: {
+                access_key_id: 'AKIAIOSFODNN7EXAMPLE',
+                secret_access_key: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+              }
+            }
+          }
         }
       }
     },
@@ -140,7 +157,7 @@ def openapi_security_schemes
     bearerAuth: {
       type: 'http',
       scheme: 'bearer',
-      bearerFormat: 'JWT'
+      bearerFormat: 'Bearer JWT'
     }
   }
 end
@@ -149,6 +166,8 @@ def openapi_schemas
   {
     HealthResponse: health_response_schema,
     LoginRequest: login_request_schema,
+    UserLoginRequest: user_login_request_schema,
+    ApiLoginRequest: api_login_request_schema,
     LoginResponse: login_response_schema,
     CurrentSession: current_session_schema,
     ErrorResponse: error_response_schema
@@ -168,12 +187,34 @@ end
 
 def login_request_schema
   {
+    oneOf: [
+      { '$ref' => '#/components/schemas/UserLoginRequest' },
+      { '$ref' => '#/components/schemas/ApiLoginRequest' }
+    ]
+  }
+end
+
+def user_login_request_schema
+  {
     type: 'object',
     required: %w[username password],
     properties: {
       username: { type: 'string', example: 'alice' },
       password: { type: 'string', example: 'secret' }
-    }
+    },
+    additionalProperties: false
+  }
+end
+
+def api_login_request_schema
+  {
+    type: 'object',
+    required: %w[access_key_id secret_access_key],
+    properties: {
+      access_key_id: { type: 'string', example: 'AKIAIOSFODNN7EXAMPLE' },
+      secret_access_key: { type: 'string', example: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' }
+    },
+    additionalProperties: false
   }
 end
 
@@ -182,7 +223,7 @@ def login_response_schema
     type: 'object',
     required: ['token'],
     properties: {
-      token: { type: 'string', example: 'Bearer eyJhbGciOi...' }
+      token: { type: 'string', example: 'Bearer eyJhbGciOiJIUzI1NiJ9...' }
     }
   }
 end
