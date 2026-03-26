@@ -25,6 +25,12 @@ class DocsControllerTest < Minitest::Test
     assert_includes response['Content-Type'], 'application/json'
     assert_equal '3.0.3', spec['openapi']
     assert_equal 'Authentication API', spec.dig('info', 'title')
+    assert_equal 'Endpoints for health checks, login, session inspection and logout.', spec.dig('info', 'description')
+    assert spec.dig('paths', '/api/v1/health')
     assert spec.dig('paths', '/api/v1/sessions')
+    assert_equal '#/components/schemas/HealthResponse',
+                 spec.dig('paths', '/api/v1/health', 'get', 'responses', '200', 'content', 'application/json',
+                          'schema', '$ref')
+    assert_equal 'ok', spec.dig('components', 'schemas', 'HealthResponse', 'properties', 'status', 'example')
   end
 end

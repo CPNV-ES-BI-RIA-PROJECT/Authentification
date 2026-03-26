@@ -43,7 +43,7 @@ def openapi_spec
     openapi: '3.0.3',
     info: openapi_info,
     servers: [{ url: request.base_url.to_s }],
-    tags: [{ name: 'Sessions' }],
+    tags: [{ name: 'Health' }, { name: 'Sessions' }],
     paths: openapi_paths,
     components: openapi_components
   }
@@ -53,16 +53,30 @@ def openapi_info
   {
     title: 'Authentication API',
     version: API_VERSION,
-    description: 'Endpoints for login, session inspection and logout.'
+    description: 'Endpoints for health checks, login, session inspection and logout.'
   }
 end
 
 def openapi_paths
   {
+    "#{PREFIX}health" => {
+      get: openapi_get_health
+    },
     "#{PREFIX}sessions" => {
       get: openapi_get_session,
       post: openapi_create_session,
       delete: openapi_delete_session
+    }
+  }
+end
+
+def openapi_get_health
+  {
+    tags: ['Health'],
+    summary: 'Health check',
+    description: 'Returns the API health status and version.',
+    responses: {
+      '200' => json_response('Health status', '#/components/schemas/HealthResponse')
     }
   }
 end
@@ -133,10 +147,22 @@ end
 
 def openapi_schemas
   {
+    HealthResponse: health_response_schema,
     LoginRequest: login_request_schema,
     LoginResponse: login_response_schema,
     CurrentSession: current_session_schema,
     ErrorResponse: error_response_schema
+  }
+end
+
+def health_response_schema
+  {
+    type: 'object',
+    required: %w[status version],
+    properties: {
+      status: { type: 'string', example: 'ok' },
+      version: { type: 'string', example: API_VERSION }
+    }
   }
 end
 
