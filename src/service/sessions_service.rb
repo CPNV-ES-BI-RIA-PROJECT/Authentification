@@ -10,14 +10,16 @@ class SessionsService
     @token_adapter_factory = TokenAdapterFactory.new
   end
 
-  def login(username, password)
-    iam_adapter = @iam_adapter_factory.get_adapter(ENV['IAM_PROVIDER'] || 'cognito')
+  def login(username, password, type = 'auth')
+    provider = type == 'auth' ? ENV['IAM_PROVIDER'] || 'cognito' : ENV['API_IAM_PROVIDER'] || 'aws'
+    iam_adapter = @iam_adapter_factory.get_adapter(provider)
+
     unless iam_adapter.verify_user_password(username, password)
-      raise InvalidCredentialsError, 'Invalid username or password'
+      raise InvalidCredentialsError, 'Invalid credentials provided'
     end
 
     token_adapter = @token_adapter_factory.get_adapter(ENV['TOKEN_PROVIDER'] || 'bearer')
-    token_adapter.create({ username: username, provider: ENV['IAM_PROVIDER'] || 'cognito' })
+    token_adapter.create({ username: username, provider: provider })
   end
 
   def current(token)

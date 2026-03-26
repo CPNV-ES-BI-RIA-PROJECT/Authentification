@@ -49,7 +49,7 @@ class SessionsServiceTest < Minitest::Test
       @service.login('alice', 'wrong-secret')
     end
 
-    assert_equal 'Invalid username or password', error.message
+    assert_equal 'Invalid credentials provided', error.message
     iam_adapter.verify
   ensure
     ENV['IAM_PROVIDER'] = previous_iam_provider

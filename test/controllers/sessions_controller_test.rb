@@ -51,7 +51,7 @@ class SessionsControllerTest < Minitest::Test
 
   def test_post_sessions_returns_token
     service = Minitest::Mock.new
-    service.expect(:login, 'Bearer generated-token', %w[alice secret])
+    service.expect(:login, 'Bearer generated-token', %w[alice secret auth])
 
     response = SessionsService.stub(:new, service) do
       @request.post(
@@ -72,12 +72,31 @@ class SessionsControllerTest < Minitest::Test
     response = @request.post('/api/v1/sessions', params: { username: 'alice' })
 
     assert_equal 400, response.status
-    assert_equal({ 'error' => 'Missing parameters' }, parse_json(response.body))
+    assert_equal({ 'error' => 'Missing required parameters' }, parse_json(response.body))
+  end
+
+  def test_post_sessions_returns_token_for_api_credentials
+    service = Minitest::Mock.new
+    service.expect(:login, 'Bearer generated-api-token', %w[akid secret-key api])
+
+    response = SessionsService.stub(:new, service) do
+      @request.post(
+        '/api/v1/sessions',
+        params: {
+          access_key_id: 'akid',
+          secret_access_key: 'secret-key'
+        }
+      )
+    end
+
+    assert_equal 200, response.status
+    assert_equal({ 'token' => 'Bearer generated-api-token' }, parse_json(response.body))
+    service.verify
   end
 
   def test_post_sessions_returns_unauthorized_on_token_error
     service = Object.new
-    def service.login(_username, _password)
+    def service.login(_username, _password, _type)
       raise InvalidTokenError, 'Login failed'
     end
 
@@ -97,7 +116,7 @@ class SessionsControllerTest < Minitest::Test
 
   def test_post_sessions_returns_bad_request_on_unknown_adapter_type
     service = Object.new
-    def service.login(_username, _password)
+    def service.login(_username, _password, _type)
       raise UnknownAdapterTypeError, 'Unknown adapter type: ldap'
     end
 
@@ -117,7 +136,7 @@ class SessionsControllerTest < Minitest::Test
 
   def test_post_sessions_returns_unauthorized_on_invalid_credentials
     service = Object.new
-    def service.login(_username, _password)
+    def service.login(_username, _password, _type)
       raise InvalidCredentialsError, 'Invalid username or password'
     end
 

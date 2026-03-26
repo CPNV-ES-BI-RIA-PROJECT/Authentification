@@ -1,4 +1,4 @@
-require 'minitest/mock'
+require_relative '../../test_helper'
 require_relative '../../../src/model/iam_adapter/aws_iam_adapter'
 
 class AwsIamAdapterTest < Minitest::Test
@@ -23,15 +23,27 @@ class AwsIamAdapterTest < Minitest::Test
   end
 
   def test_verify_user_password_with_valid_credentials
-    client = Object.new
-    def client.get_user(*)
-      { user: { password_last_used: '2025-03-12T11:00:00Z' } }
+    login_client = Object.new
+    verify_client = Object.new
+    captured_params = nil
+
+    login_client.define_singleton_method(:get_user) do
+      Struct.new(:user).new(Struct.new(:user_name).new('test-user'))
     end
 
-    Aws::IAM::Client.stub(:new, client) do
+    verify_client.define_singleton_method(:get_user) do |params|
+      captured_params = params
+      true
+    end
+
+    clients = [verify_client, login_client]
+
+    Aws::IAM::Client.stub(:new, ->(**_kwargs) { clients.shift }) do
       adapter = AwsIamAdapter.new
       assert adapter.verify_user_password('test-key', 'test-secret')
     end
+
+    assert_equal({ user_name: 'test-user' }, captured_params)
   end
 
   def test_verify_user_password_with_invalid_credentials

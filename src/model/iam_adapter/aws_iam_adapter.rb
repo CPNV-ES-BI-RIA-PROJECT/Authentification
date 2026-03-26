@@ -25,13 +25,15 @@ class AwsIamAdapter < IamProviderAdapter
   end
 
   def verify_user_password(username, password)
-    @iam_client.get_user({
-                           access_key_id: username,
-                           access_key_secret: password
-                         })
+    credentials = Aws::Credentials.new(username, password)
+    iam_client = Aws::IAM::Client.new(region: 'us-east-1', credentials: credentials)
+    user = iam_client.get_user
+
+    @iam_client.get_user(user_name: user.user.user_name)
 
     true
-  rescue Aws::IAM::Errors::NoSuchEntity, Aws::IAM::Errors::AccessDenied
+  rescue Aws::IAM::Errors::NoSuchEntity, Aws::IAM::Errors::AccessDenied, Aws::IAM::Errors::UnrecognizedClientException,
+         Aws::IAM::Errors::InvalidClientTokenId, Aws::IAM::Errors::SignatureDoesNotMatch
     false
   end
 end

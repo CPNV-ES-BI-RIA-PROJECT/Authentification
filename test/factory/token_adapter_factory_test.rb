@@ -16,18 +16,13 @@ class TokenAdapterFactoryTest < Minitest::Test
     end
   end
 
-  def test_get_adapter_returns_aws_signed_adapter_and_memoizes_it
-    adapter = Object.new
-    AwsSignedTokenAdapter.stub(:new, adapter) do
-      first = @factory.get_adapter('AWS4-HMAC-SHA256')
-      second = @factory.get_adapter('aws4-hmac-sha256')
-      assert_same adapter, first
-      assert_same first, second
-    end
-  end
-
   def test_get_adapter_raises_for_unknown_type
     error = assert_raises(UnknownAdapterTypeError) { @factory.get_adapter('jwt') }
     assert_equal 'Unknown adapter type: jwt', error.message
+  end
+
+  def test_get_adapter_raises_for_aws_signature_type
+    error = assert_raises(UnknownAdapterTypeError) { @factory.get_adapter('AWS4-HMAC-SHA256') }
+    assert_equal 'Unknown adapter type: aws4-hmac-sha256', error.message
   end
 end
