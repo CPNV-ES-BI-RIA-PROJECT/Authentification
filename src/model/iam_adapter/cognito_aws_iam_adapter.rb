@@ -9,7 +9,6 @@ class CognitoAwsIamAdapter < IamProviderAdapter
     AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY
     AWS_COGNITO_CLIENT_ID
-    AWS_COGNITO_CLIENT_SECRET
     AWS_COGNITO_USER_POOL_ID
   ].freeze
 
@@ -17,8 +16,8 @@ class CognitoAwsIamAdapter < IamProviderAdapter
     super()
     unless validate_credentials
       raise MissingCredentialsError.new,
-            'AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_COGNITO_CLIENT_ID, AWS_COGNITO_CLIENT_SECRET,
-            and AWS_COGNITO_USER_POOL_ID must be set for AWS Cognito integration.'
+            'AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_COGNITO_CLIENT_ID, and AWS_COGNITO_USER_POOL_ID
+            must be set for AWS Cognito integration.'
     end
 
     region = ENV['AWS_REGION'] || 'us-east-1'

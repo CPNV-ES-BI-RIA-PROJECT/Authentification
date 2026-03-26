@@ -115,6 +115,26 @@ class SessionsControllerTest < Minitest::Test
     assert_equal({ 'error' => 'Unknown adapter type: ldap' }, parse_json(response.body))
   end
 
+  def test_post_sessions_returns_unauthorized_on_invalid_credentials
+    service = Object.new
+    def service.login(_username, _password)
+      raise InvalidCredentialsError, 'Invalid username or password'
+    end
+
+    response = SessionsService.stub(:new, service) do
+      @request.post(
+        '/api/v1/sessions',
+        params: {
+          username: 'alice',
+          password: 'wrong-secret'
+        }
+      )
+    end
+
+    assert_equal 401, response.status
+    assert_equal({ 'error' => 'Invalid username or password' }, parse_json(response.body))
+  end
+
   def test_delete_sessions_calls_logout
     service = Minitest::Mock.new
     service.expect(:logout, nil, ['Bearer token-value'])

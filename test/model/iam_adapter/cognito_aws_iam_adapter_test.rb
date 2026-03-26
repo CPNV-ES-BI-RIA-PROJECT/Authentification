@@ -29,7 +29,7 @@ class CognitoAwsIamAdapterTest < Minitest::Test
 
   def test_verify_user_password_with_valid_credentials
     client = Object.new
-    def client.admin_initiate_auth(*)
+    def client.initiate_auth(*)
       { authentication_result: {} }
     end
 
@@ -41,7 +41,7 @@ class CognitoAwsIamAdapterTest < Minitest::Test
 
   def test_verify_user_password_with_invalid_credentials
     client = Object.new
-    def client.admin_initiate_auth(*)
+    def client.initiate_auth(*)
       raise Aws::CognitoIdentityProvider::Errors::NotAuthorizedException.new(nil, 'not found')
     end
 
@@ -54,7 +54,7 @@ class CognitoAwsIamAdapterTest < Minitest::Test
 
   def test_verify_user_password_with_access_denied
     client = Object.new
-    def client.admin_initiate_auth(*)
+    def client.initiate_auth(*)
       raise Aws::CognitoIdentityProvider::Errors::NotAuthorizedException.new(nil, 'access denied')
     end
 
@@ -68,7 +68,7 @@ class CognitoAwsIamAdapterTest < Minitest::Test
     ENV['AWS_COGNITO_CLIENT_SECRET'] = 'client-secret'
     client = Object.new
     captured = {}
-    client.define_singleton_method(:admin_initiate_auth) do |params|
+    client.define_singleton_method(:initiate_auth) do |params|
       captured[:params] = params
       { authentication_result: {} }
     end

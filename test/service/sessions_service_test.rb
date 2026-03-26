@@ -37,6 +37,24 @@ class SessionsServiceTest < Minitest::Test
     ENV['TOKEN_PROVIDER'] = previous_token_provider
   end
 
+  def test_login_raises_when_credentials_are_invalid
+    previous_iam_provider = ENV['IAM_PROVIDER']
+    ENV['IAM_PROVIDER'] = 'custom-iam'
+
+    iam_adapter = Minitest::Mock.new
+    @iam_factory.expect(:get_adapter, iam_adapter, ['custom-iam'])
+    iam_adapter.expect(:verify_user_password, false, %w[alice wrong-secret])
+
+    error = assert_raises(InvalidCredentialsError) do
+      @service.login('alice', 'wrong-secret')
+    end
+
+    assert_equal 'Invalid username or password', error.message
+    iam_adapter.verify
+  ensure
+    ENV['IAM_PROVIDER'] = previous_iam_provider
+  end
+
   def test_current_parses_token_and_verifies_it
     token_adapter = Object.new
     called_with = nil
