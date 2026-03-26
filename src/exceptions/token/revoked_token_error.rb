@@ -1,3 +1,5 @@
 require_relative 'token_error'
 
-class RevokedTokenError < TokenError; end
+class RevokedTokenError < TokenError
+  MESSAGE = 'Token has been revoked'.freeze
+end

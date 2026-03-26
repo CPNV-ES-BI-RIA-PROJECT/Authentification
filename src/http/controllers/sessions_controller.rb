@@ -1,8 +1,6 @@
 require_relative '../config'
 require_relative '../../service/sessions_service'
-require_relative '../../exceptions/token/token_error'
-require_relative '../../exceptions/invalid_credentials_error'
-require_relative '../../exceptions/unknown_adapter_type_error'
+require_relative '../../exceptions/missing_parameters_error'
 
 before do
   @sessions_service = SessionsService.new
@@ -14,9 +12,6 @@ get "#{PREFIX}sessions" do
   token = request.env['HTTP_AUTHORIZATION']
 
   @sessions_service.current(token).to_json
-rescue TokenError => e
-  status 401
-  { error: e.message }.to_json
 end
 
 post "#{PREFIX}sessions" do
@@ -35,18 +30,8 @@ post "#{PREFIX}sessions" do
       )
     }.to_json
   else
-    status 400
-    return { error: 'Missing required parameters' }.to_json
+    raise MissingParametersError
   end
-rescue UnknownAdapterTypeError => e
-  status 400
-  { error: e.message }.to_json
-rescue InvalidCredentialsError
-  status 401
-  { error: 'Invalid username or password' }.to_json
-rescue TokenError => e
-  status 401
-  { error: e.message }.to_json
 end
 
 delete "#{PREFIX}sessions" do
@@ -54,7 +39,4 @@ delete "#{PREFIX}sessions" do
 
   token = request.env['HTTP_AUTHORIZATION']
   @sessions_service.logout(token)
-rescue TokenError => e
-  status 401
-  { error: e.message }.to_json
 end

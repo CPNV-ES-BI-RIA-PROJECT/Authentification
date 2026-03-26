@@ -1,3 +1,5 @@
 require_relative 'token_error'
 
-class InvalidTokenError < TokenError; end
+class InvalidTokenError < TokenError
+  MESSAGE = 'Invalid token'.freeze
+end
