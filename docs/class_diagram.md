@@ -1,8 +1,30 @@
 ```mermaid
 classDiagram
+  namespace Services {
+    class SessionsService {
+      -iam_adapter_factory: IamAdapterFactory
+      -token_adapter_factory: TokenAdapterFactory
+      +initialize()
+      +login(username: string, password: string, type: string = "auth") string
+      +current(token: string) hash
+      +logout(token: string) nil
+      -parse_token(token: string) array
+    }
+  }
+
+  namespace Factories {
+    class IamAdapterFactory {
+      +get_adapter(adapter_type: string) IamProviderAdapter
+    }
+
+    class TokenAdapterFactory {
+      +get_adapter(adapter_type: string) BearerTokenAdapter
+    }
+  }
+
   namespace IamAdapters {
     class IamProviderAdapter {
-      <<interface>>
+      <<abstract>>
       +verify_user_password(username: string, password: string) bool
     }
 
@@ -24,22 +46,23 @@ classDiagram
       -compute_secret_hash(username: string) string
     }
 
-    class IamAdapterFactory {
-      +get_adapter(adapter_type: string) IamProviderAdapter
+    class FakeIamAdapter {
+      +verify_user_password(username: string, password: string) bool
     }
   }
 
   namespace TokenAdapters {
     class TokenAdapter {
-      <<interface>>
+      <<abstract>>
       +create(data: hash) string
       +verify(token: string) hash
       +revoke(token: string) nil
     }
 
     class BearerTokenAdapter {
-      -secret_key: string
       -expiration_time: integer
+      -random_key: string
+      -secret_key: string
       +initialize()
       +create(data: hash) string
       +verify(token: string) hash
@@ -47,50 +70,30 @@ classDiagram
       -decode_and_validate(token: string) array
       -revoked_tokens() array
     }
-
-    class AwsSignedTokenAdapter {
-      -iam_adapter: IamProviderAdapter
-      +initialize()
-      +create(data: hash) string <<raises NotImplementedError>>
-      +verify(token: string) hash
-      +revoke(token: string) nil
-      -parse_authorization_header(token: string) hash
-      -validate_token_presence(token: string) nil
-      -validate_credential(credential: string) nil
-      -validate_signature(signature: string) nil
-      -validate_signature_format(signature: string) nil
-      -validate_signed_headers(headers: string) nil
-      -validate_access_key_id(access_key_id: string) nil
-      -validate_credential_format(credential: string) nil
-    }
-
-    class TokenAdapterFactory {
-      +get_adapter(adapter_type: string) TokenAdapter
-    }
-  }
-
-  class SessionsService {
-    -iam_adapter_factory: IamAdapterFactory
-    -token_adapter_factory: TokenAdapterFactory
-    +login(username: string, password: string) string
-    +current(token: string) hash
-    +logout(token: string) nil
-    -parse_token(token: string) array
-  }
-
-  class SessionsController {
-    -sessions_service: SessionsService
-    +get_sessions(request)
-    +post_sessions(request)
-    +delete_sessions(request)
   }
 
   namespace Exceptions {
-    class UnknownAdapterTypeError {
+    class ApplicationError {
       <<exception>>
+      +status: integer
+      +initialize(message: string, status: integer)
+      +default_status() integer
+      +default_message() string
     }
 
     class MissingCredentialsError {
+      <<exception>>
+    }
+
+    class MissingParametersError {
+      <<exception>>
+    }
+
+    class InvalidCredentialsError {
+      <<exception>>
+    }
+
+    class UnknownAdapterTypeError {
       <<exception>>
     }
   }
@@ -121,24 +124,31 @@ classDiagram
     }
   }
 
-  SessionsController --> SessionsService
+  namespace HttpRoutes {
+    class SessionsRoutes["Sessions routes (Sinatra)"]
+    class HealthRoutes["Health routes (Sinatra)"]
+    class DocsRoutes["Docs routes (Sinatra)"]
+  }
+
+  SessionsRoutes ..> SessionsService
+
   SessionsService --> IamAdapterFactory
   SessionsService --> TokenAdapterFactory
 
   IamAdapterFactory --> IamProviderAdapter
-  TokenAdapterFactory --> TokenAdapter
+  TokenAdapterFactory --> BearerTokenAdapter
 
-  AwsIamAdapter <|.. IamProviderAdapter
-  CognitoAwsIamAdapter <|.. IamProviderAdapter
-  BearerTokenAdapter <|.. TokenAdapter
-  AwsSignedTokenAdapter <|.. TokenAdapter
+  IamProviderAdapter <|-- AwsIamAdapter
+  IamProviderAdapter <|-- CognitoAwsIamAdapter
+  IamProviderAdapter <|-- FakeIamAdapter
 
-  AwsSignedTokenAdapter --> IamProviderAdapter
+  TokenAdapter <.. BearerTokenAdapter : duck type
 
-  AwsIamAdapter ..> MissingCredentialsError
-  CognitoAwsIamAdapter ..> MissingCredentialsError
-  IamAdapterFactory ..> UnknownAdapterTypeError
-  TokenAdapterFactory ..> UnknownAdapterTypeError
+  ApplicationError <|-- MissingCredentialsError
+  ApplicationError <|-- MissingParametersError
+  ApplicationError <|-- InvalidCredentialsError
+  ApplicationError <|-- UnknownAdapterTypeError
+  ApplicationError <|-- TokenError
 
   TokenError <|-- AuthorizationTokenIsMissingError
   TokenError <|-- InvalidTokenFormatError
@@ -146,13 +156,15 @@ classDiagram
   TokenError <|-- ExpiredTokenError
   TokenError <|-- RevokedTokenError
 
+  AwsIamAdapter ..> MissingCredentialsError
+  CognitoAwsIamAdapter ..> MissingCredentialsError
+  IamAdapterFactory ..> UnknownAdapterTypeError
+  TokenAdapterFactory ..> UnknownAdapterTypeError
+  SessionsService ..> InvalidCredentialsError
   SessionsService ..> AuthorizationTokenIsMissingError
   SessionsService ..> InvalidTokenFormatError
-
   BearerTokenAdapter ..> InvalidTokenError
   BearerTokenAdapter ..> ExpiredTokenError
   BearerTokenAdapter ..> RevokedTokenError
-  AwsSignedTokenAdapter ..> InvalidTokenError
-
-  SessionsController ..> TokenError
+  SessionsRoutes ..> MissingParametersError
 ```
