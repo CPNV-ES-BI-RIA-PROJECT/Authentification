@@ -9,6 +9,7 @@ class CognitoAwsIamAdapter < IamProviderAdapter
     AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY
     AWS_COGNITO_CLIENT_ID
+    AWS_COGNITO_CLIENT_SECRET
     AWS_COGNITO_USER_POOL_ID
   ].freeze
 
@@ -16,8 +17,8 @@ class CognitoAwsIamAdapter < IamProviderAdapter
     super()
     unless validate_credentials
       raise MissingCredentialsError.new,
-            'AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_COGNITO_CLIENT_ID, and AWS_COGNITO_USER_POOL_ID must be set
-            for AWS Cognito integration.'
+            'AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_COGNITO_CLIENT_ID, AWS_COGNITO_CLIENT_SECRET,
+            and AWS_COGNITO_USER_POOL_ID must be set for AWS Cognito integration.'
     end
 
     region = ENV['AWS_REGION'] || 'us-east-1'
@@ -40,12 +41,12 @@ class CognitoAwsIamAdapter < IamProviderAdapter
     }
     auth_parameters['SECRET_HASH'] = compute_secret_hash(username) if @client_secret
 
-    @cognito_client.admin_initiate_auth(
-      user_pool_id: @user_pool_id,
+    @cognito_client.initiate_auth(
       client_id: @client_id,
-      auth_flow: 'ADMIN_USER_PASSWORD_AUTH',
+      auth_flow: 'USER_PASSWORD_AUTH',
       auth_parameters: auth_parameters
     )
+
     true
   rescue Aws::CognitoIdentityProvider::Errors::NotAuthorizedException,
          Aws::CognitoIdentityProvider::Errors::UserNotFoundException,

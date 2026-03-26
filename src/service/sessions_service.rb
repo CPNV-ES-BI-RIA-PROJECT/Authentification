@@ -2,6 +2,7 @@ require_relative '../factory/iam_adapter_factory'
 require_relative '../factory/token_adapter_factory'
 require_relative '../exceptions/token/authorization_token_is_missing_error'
 require_relative '../exceptions/token/invalid_token_format_error'
+require_relative '../exceptions/invalid_credentials_error'
 
 class SessionsService
   def initialize
@@ -11,7 +12,10 @@ class SessionsService
 
   def login(username, password)
     iam_adapter = @iam_adapter_factory.get_adapter(ENV['IAM_PROVIDER'] || 'cognito')
-    iam_adapter.verify_user_password(username, password)
+    unless iam_adapter.verify_user_password(username, password)
+      raise InvalidCredentialsError, 'Invalid username or password'
+    end
+
     token_adapter = @token_adapter_factory.get_adapter(ENV['TOKEN_PROVIDER'] || 'bearer')
     token_adapter.create({ username: username, provider: ENV['IAM_PROVIDER'] || 'cognito' })
   end

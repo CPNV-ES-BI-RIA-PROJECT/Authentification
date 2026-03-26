@@ -1,6 +1,8 @@
 require_relative '../config'
 require_relative '../../service/sessions_service'
 require_relative '../../exceptions/token/token_error'
+require_relative '../../exceptions/invalid_credentials_error'
+require_relative '../../exceptions/unknown_adapter_type_error'
 
 before do
   @sessions_service = SessionsService.new
@@ -33,6 +35,9 @@ post "#{PREFIX}sessions" do
 rescue UnknownAdapterTypeError => e
   status 400
   { error: e.message }.to_json
+rescue InvalidCredentialsError
+  status 401
+  { error: 'Invalid username or password' }.to_json
 rescue TokenError => e
   status 401
   { error: e.message }.to_json
