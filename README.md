@@ -3,9 +3,12 @@
 This component is responsible for handling user Session in the application. It provides functionalities for user login.
 
 ## Features for other components
-- User login with email and password
+- User login with username and password
+- API login with `access_key_id` and `secret_access_key`
 - Bearer token generation for authenticated sessions
+- Session inspection and token revocation
 - Validation of user credentials
+- Swagger API documentation available at `/api/docs`
 
 ## Getting Started
 
@@ -13,6 +16,7 @@ This component is responsible for handling user Session in the application. It p
 
 - Ruby 3.4.7
 - Bundler 2.6.9
+- Docker 28.1.1 (Deployment on integration environment)
 
 ### Configuration
 
@@ -42,7 +46,7 @@ rake test
 
 ### On integration environment
 
-TODO: add the steps to deploy on integration environment
+For the integration environment, please refer to the [deployment documentation](./docs/deployment.md) in the `docs` directory for detailed instructions on how to deploy the application using Docker. 
 
 ## Directory structure
 
@@ -59,6 +63,7 @@ TODO: add the steps to deploy on integration environment
 │   │   └── start.rb      # Entry point for starting the HTTP server
 │   ├── model             # Model files representing the data structures and business logic
 │   └── service           # Service files for handling business logic and interactions between models
+├── storages              # Storage files for data persistence and caching
 └── test                  # Test files for unit and integration testing
 ```
 
@@ -100,6 +105,11 @@ We follow the Git Flow branching strategy, which includes the following branches
 - `hotfix/*`: Branches for fixing critical bugs in production. These branches are created from main and are merged into main and develop when the hotfix is complete.
 
 * For more details on Git Flow, see: https://nvie.com/posts/a-successful-git-branching-model/
+
+### Testing
+
+- Unit tests are required for all new features and bug fixes.
+- 100% code coverage is expected for all new code, and existing code should maintain or improve its coverage.
 
 ## License
 
